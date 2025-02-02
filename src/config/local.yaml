@@ -1,5 +1,12 @@
-consumer:
+consumer_1:
   env: localhost:9092,localhost:9093,localhost:9091
   consumer_group: test_group
   message_topic: orders 
 
+
+http_server:
+  host: localhost
+  protocol: http
+  port: 8000
+  timeout: 5s
+  idle_timeout: 60s

@@ -18,8 +18,7 @@ type ConsumerService struct {
 
 func NewConsumerService(logger *slog.Logger, cfg config.Consumer) (*ConsumerService, error) {
 
-	// Проверка подключения
-	consumer, err := connToKafka(cfg)
+	consumer, err := connToKafkaTopic(cfg)
 	if err != nil {
 		logger.Error("Ошибка подключения к Kafka", slog.String("error", err.Error()))
 	} else {
@@ -36,7 +35,7 @@ func NewConsumerService(logger *slog.Logger, cfg config.Consumer) (*ConsumerServ
 
 }
 
-func connToKafka(cfg config.Consumer) (*kafka.Consumer, error) {
+func connToKafkaTopic(cfg config.Consumer) (*kafka.Consumer, error) {
 	config := &kafka.ConfigMap{
 		"bootstrap.servers": cfg.Brokers,
 		"group.id":          cfg.GroupId,
@@ -57,7 +56,7 @@ func connToKafka(cfg config.Consumer) (*kafka.Consumer, error) {
 	return consumer, nil
 }
 
-func loopGetMsg(c *ConsumerService) (msg *kafka.Message, err error) {
+func (c *ConsumerService) LoopGetMsg() {
 	const op = "consumer.loopGetMsg"
 	c.logger = slog.With(
 		slog.String("op", op),
@@ -77,16 +76,21 @@ func loopGetMsg(c *ConsumerService) (msg *kafka.Message, err error) {
 				}
 				err = fmt.Errorf("error while reading from kafka: %w", err)
 				c.logger.Error("Error while reading from kafka", slog.String("error", err.Error()))
-				return nil, err
+				return
 			}
 			c.logger.Info("Message received", slog.String("topic", *msg.TopicPartition.Topic),
 				slog.Int("partition", int(msg.TopicPartition.Partition)),
 				slog.Any("offset", msg.TopicPartition.Offset),
 				slog.String("value", string(msg.Value)))
-			return msg, nil // TODO добавть добавление в db
+			return // TODO добавть добавление в db
 		}
 
 	}
+}
+
+func (c *ConsumerService) StopConsumer() {
+	c.stop <- true
+	c.logger.Info("Consumer is stoped")
 }
 
 func connToPosgre() {}
