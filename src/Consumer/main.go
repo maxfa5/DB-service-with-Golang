@@ -11,8 +11,13 @@ import (
 )
 
 func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	// Укажите адреса брокеров
+
+	file, err := os.Create("loger.txt")
+	if err != nil {
+		fmt.Println("error in logger")
+	}
+	defer file.Close()
+	logger := slog.New(slog.NewJSONHandler(file, nil)) // Укажите адреса брокеров
 	brokers := "localhost:9092,localhost:9093,localhost:9091"
 	topic := "orders"
 	groupId := "test_group"
@@ -31,24 +36,25 @@ func main() {
 
 	logger.Info("Программа заверена")
 }
-
-func connToKafka(brokers string, topic string, groupId string) (c *kafka.Consumer, err error) {
-	c, err = kafka.NewConsumer(&kafka.ConfigMap{
+func connToKafka(brokers string, topic string, groupId string) (*kafka.Consumer, error) {
+	config := &kafka.ConfigMap{
 		"bootstrap.servers": brokers,
 		"group.id":          groupId,
 		"auto.offset.reset": "earliest",
-	})
-	if err != nil {
-		return nil, err
 	}
 
-	// Попробуйте подписаться на тему
-	err = c.SubscribeTopics([]string{topic}, nil)
+	consumer, err := kafka.NewConsumer(config)
 	if err != nil {
-		c.Close()
-		return nil, err
+		return nil, fmt.Errorf("error creating kafka consumer: %w", err)
 	}
-	return c, nil
+
+	err = consumer.SubscribeTopics([]string{topic}, nil)
+	if err != nil {
+		consumer.Close()
+		return nil, fmt.Errorf("error subscribing to topic: %w", err)
+	}
+
+	return consumer, nil
 }
 
 func loopCathMsg(logger *slog.Logger, consumer *kafka.Consumer, timeout time.Duration) (msg *kafka.Message, err error) {

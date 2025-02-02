@@ -1,0 +1,3 @@
+{"time":"2025-02-02T14:10:57.424403163+05:00","level":"INFO","msg":"Consumer успешно подключен к Kafka. Ожидание сообщений..."}
+{"time":"2025-02-02T14:10:57.424698574+05:00","level":"ERROR","msg":"Error while reading from kafka","error":"error while reading from kafka: localhost:9093/bootstrap: Connect to ipv4#127.0.0.1:9093 failed: Connection refused (after 0ms in state CONNECT)"}
+{"time":"2025-02-02T14:10:57.424720605+05:00","level":"INFO","msg":"Программа заверена"}
