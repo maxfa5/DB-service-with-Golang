@@ -27,7 +27,7 @@ type HTTPServer struct {
 }
 
 func EnvLoad() *Config {
-	if err := godotenv.Load(".env"); err != nil {
+	if err := godotenv.Load("../../.env"); err != nil {
 		log.Fatal("failed to load environment file, error: ", err)
 	}
 
@@ -36,11 +36,12 @@ func EnvLoad() *Config {
 		log.Fatal("CONFIG_PATH is not set")
 	}
 
-	cfg := EnvLoadInPath(configPath)
+	cfg := EnvLoadInPath("../../" + configPath)
 	return cfg
 }
 
 func EnvLoadInPath(configPath string) *Config {
+
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		log.Fatal("config file not found: ", err)
 	}

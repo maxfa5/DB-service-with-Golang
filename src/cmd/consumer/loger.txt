@@ -1,2 +1,0 @@
-{"time":"2025-02-02T16:39:21.010366033+05:00","level":"ERROR","msg":"Ошибка подключения к Kafka","error":"error retrieving metaLocal: Broker transport failure"}
-{"time":"2025-02-02T16:39:21.010419846+05:00","level":"ERROR","msg":"error in create Consumer: ","error":"error retrieving metaLocal: Broker transport failure"}

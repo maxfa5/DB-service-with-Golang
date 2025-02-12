@@ -80,7 +80,7 @@ services:
       - broker3
 
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:8080/actuator/health"] #лучше использовать curl, но его нужно устанавливать в образ
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:9020/actuator/health"] #лучше использовать curl, но его нужно устанавливать в образ
       interval: 10s
       timeout: 3s
       retries: 2

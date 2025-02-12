@@ -2,7 +2,9 @@ package consumer
 
 import (
 	"fmt"
+	database "kafka_with_go/internal/Dbconnect"
 	"kafka_with_go/internal/config"
+	"log"
 	"log/slog"
 	"time"
 
@@ -22,7 +24,6 @@ func NewConsumerService(logger *slog.Logger, cfg config.Consumer) (*ConsumerServ
 	if err != nil {
 		logger.Error("Ошибка подключения к Kafka", slog.String("error", err.Error()))
 	} else {
-		defer consumer.Close()
 		logger.Info("Consumer успешно подключен к Kafka. Ожидание сообщений...")
 	}
 
@@ -47,6 +48,12 @@ func connToKafkaTopic(cfg config.Consumer) (*kafka.Consumer, error) {
 		return nil, fmt.Errorf("error creating kafka consumer: %w", err)
 	}
 
+	_, err = consumer.GetMetadata(nil, true, 500)
+	if err != nil {
+		consumer.Close()
+		return nil, fmt.Errorf("error retrieving meta%w", err)
+	}
+
 	err = consumer.SubscribeTopics([]string{cfg.Topic}, nil)
 	if err != nil {
 		consumer.Close()
@@ -61,14 +68,17 @@ func (c *ConsumerService) LoopGetMsg() {
 	c.logger = slog.With(
 		slog.String("op", op),
 	)
-
+	err := database.InitDB(c.logger, "postgres://postgres:4738@192.168.189.230:5433")
+	if err != nil {
+		log.Fatalf("Ошибка инициализации базы данных: %v", err)
+	}
 	for {
 		select {
 		case <-c.stop:
 			c.logger.Warn("consumer stopped")
 			return
 		default:
-			msg, err := c.consumer.ReadMessage(time.Second)
+			msg, err := c.consumer.ReadMessage(time.Second * 1)
 			if err != nil {
 				if kafkaErr, ok := err.(kafka.Error); ok && kafkaErr.Code() == kafka.ErrTimedOut {
 					c.logger.Debug("No message received yet, continuing loop", slog.String("error", err.Error()))
@@ -76,13 +86,12 @@ func (c *ConsumerService) LoopGetMsg() {
 				}
 				err = fmt.Errorf("error while reading from kafka: %w", err)
 				c.logger.Error("Error while reading from kafka", slog.String("error", err.Error()))
-				return
 			}
 			c.logger.Info("Message received", slog.String("topic", *msg.TopicPartition.Topic),
 				slog.Int("partition", int(msg.TopicPartition.Partition)),
 				slog.Any("offset", msg.TopicPartition.Offset),
 				slog.String("value", string(msg.Value)))
-			return // TODO добавть добавление в db
+			// TODO добавть добавление в db
 		}
 
 	}
@@ -92,7 +101,3 @@ func (c *ConsumerService) StopConsumer() {
 	c.stop <- true
 	c.logger.Info("Consumer is stoped")
 }
-
-func connToPosgre() {}
-
-func SendMessToDB() {}
